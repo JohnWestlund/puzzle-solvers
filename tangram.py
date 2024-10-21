@@ -2,9 +2,6 @@ import argparse
 import string
 import sys
 
-## Bugs:
-## 1. Can't define grid or peice row sizes greater than 9, workaround use 9,1 for 10, etc.
-
 # ANSI escape codes for colors
 COLORS = [
     "\033[97m",  # White
@@ -61,7 +58,7 @@ def parse_board_or_piece(input_str, max_length):
                 bit_row.append(0)
             else:
                 try:
-                    num = int(elem, 16)
+                    num = int(elem)
                 except ValueError:
                     raise ValueError(f"Invalid element '{elem}' in input string.")
                 if num < 0:
@@ -120,23 +117,19 @@ def print_bit_array(bit_array, piece_number=None, use_color=False, verbosity=0):
         letter = string.ascii_letters[piece_number - 1]
         color = COLORS[piece_number % len(COLORS)] if use_color else ""
         reset = RESET_COLOR if use_color else ""
-        #print("+" + "-" * (max_length * 2 - 1) + "+")
         print("+" + "-" * (max_length * 2) + "+")
         for row in bit_array:
             #row_str = ' '.join(color + letter + reset if x == 1 else ' ' for x in row[:max_length])
             row_str = ' '.join(color + letter if x == 1 else reset + " " for x in row[:max_length]) + " "
             #print("|" + row_str + " " * (max_length * 2 - 1 - len(row_str)) + "|")
             print("|" + row_str + reset + " " * (max_length * 2 - 1 - len(row_str)) + "|")
-        #print("+" + "-" * (max_length * 2 - 1) + "+")
         print("+" + "-" * (max_length * 2) + "+")
     else:
-        #print("+" + "-" * (max_length * 2 - 1) + "+")
         print("+" + "-" * (max_length * 2) + "+")
         for row in bit_array:
             row_str = ' '.join(map(str, row[:max_length]))
             #print("|" + row_str + " " * (max_length * 2 - 1 - len(row_str)) + "|")
             print("|" + row_str + " " + reset + " " * (max_length * 2 - 2 - len(row_str)) + "|")
-        # print("+" + "-" * (max_length * 2 - 1) + "+")
         print("+" + "-" * (max_length * 2) + "+")
 
 def print_1d_bitmap(bitmap):
@@ -206,7 +199,6 @@ class CustomArgumentParser(argparse.ArgumentParser):
         self.print_usage(sys.stderr)
         self.exit(2, f"Error parsing arguments: {message}\n")
 
-#parser = argparse.ArgumentParser(description='Process a 2D bit array from a command line input.')
 parser = CustomArgumentParser(description='Process a 2D bit array from a command line input.')
 parser.add_argument('-b', '--board', type=str, required=True, help='The board definition string.')
 parser.add_argument('-p', '--pieces', type=str, nargs='*', help='The piece definition strings.')
@@ -261,8 +253,7 @@ if args.pieces:
             error_message = str(e)
             if any(part.startswith('-') for part in args.board.split(',')):
                 error_message += " If an argument starts with a '-', please escape it with a '\\'."
-            print(f"Error parsing board: {error_message}")
-#            print(f"Error parsing piece {i+1}: {e}")
+            print(f"Error parsing piece {i+1}: {error_message}")
             continue
 
         piece_bitmap = convert_to_1d_bitmap(piece_array)
@@ -280,7 +271,6 @@ for piece_info in piece_fits:
     piece_number, piece_bitmap, fits = piece_info
     piece_array = piece_array_map[piece_number]
     print(f"\nPiece {piece_number}:")
-    #print_bit_array(piece_array, piece_number - 1, use_color=args.color, verbosity=args.v)
     print_bit_array(piece_array, piece_number, use_color=args.color, verbosity=args.v)
     if args.v >= 1:
         print(f"1D Piece {piece_number} Bitmap:")
@@ -295,7 +285,6 @@ if args.solve:
 
     pieces_sorted = [(piece_number, piece_bitmap) for piece_number, piece_bitmap, fits in piece_fits]
     reset = RESET_COLOR + " " if args.color else " "
-    #board_2d = [[' ' for _ in range(len(board_array[0]))] for _ in range(len(board_array))]
     board_2d = [[reset for _ in range(len(board_array[0]))] for _ in range(len(board_array))]
     if not solve_recursive(board_bitmap, pieces_sorted, max_length, [], board_2d, args.v, args.color):
         print("No solution found.")
