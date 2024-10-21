@@ -119,16 +119,13 @@ def print_bit_array(bit_array, piece_number=None, use_color=False, verbosity=0):
         reset = RESET_COLOR if use_color else ""
         print("+" + "-" * (max_length * 2) + "+")
         for row in bit_array:
-            #row_str = ' '.join(color + letter + reset if x == 1 else ' ' for x in row[:max_length])
             row_str = ' '.join(color + letter if x == 1 else reset + " " for x in row[:max_length]) + " "
-            #print("|" + row_str + " " * (max_length * 2 - 1 - len(row_str)) + "|")
             print("|" + row_str + reset + " " * (max_length * 2 - 1 - len(row_str)) + "|")
         print("+" + "-" * (max_length * 2) + "+")
     else:
         print("+" + "-" * (max_length * 2) + "+")
         for row in bit_array:
             row_str = ' '.join(map(str, row[:max_length]))
-            #print("|" + row_str + " " * (max_length * 2 - 1 - len(row_str)) + "|")
             print("|" + row_str + " " + reset + " " * (max_length * 2 - 2 - len(row_str)) + "|")
         print("+" + "-" * (max_length * 2) + "+")
 
@@ -199,13 +196,12 @@ class CustomArgumentParser(argparse.ArgumentParser):
         self.print_usage(sys.stderr)
         self.exit(2, f"Error parsing arguments: {message}\n")
 
-parser = CustomArgumentParser(description='Process a 2D bit array from a command line input.')
-parser.add_argument('-b', '--board', type=str, required=True, help='The board definition string.')
-parser.add_argument('-p', '--pieces', type=str, nargs='*', help='The piece definition strings.')
-parser.add_argument('-v', action='count', default=0, help='Increase verbosity level.')
-parser.add_argument('-s', '--solve', action='store_true', help='Check if the puzzle is solvable by comparing the number of 1s in the board and pieces.')
+parser = CustomArgumentParser(description='Solve tangram style grid puzzles')
+parser.add_argument('-b', '--board', type=str, required=True, help='Board definition string.')
+parser.add_argument('-p', '--pieces', type=str, nargs='*', help='Piece definition strings.')
+parser.add_argument('-v', action='count', default=0, help='Increase verbosity level. Up to -vvv.')
+parser.add_argument('-s', '--solve', action='store_true', help='Check if the puzzle is solvable. Returns 1st solution, not all..')
 parser.add_argument('-c', '--color', action='store_true', help='Enable color coding for the pieces.')
-parser.add_argument('positional', nargs='*', help='Positional arguments')
 
 try:
     args = parser.parse_args()
