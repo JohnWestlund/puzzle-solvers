@@ -1,24 +1,57 @@
 import argparse
 
-def is_perimeter(grid, x, y, start, end):
+def is_perimeter(grid, x, y, pairs, label=None):
     rows, cols = len(grid), len(grid[0])
+    
+    # Temporarily modify the grid if a label is provided
+    if label:
+        try:
+            start_end_pair = next(pair for pair in pairs if pair['label'] == label)
+        except StopIteration:
+            print(f"Label '{label}' not found in pairs.")
+            return False
+
+        start = start_end_pair['start']
+        end = start_end_pair['end']
+        original_start_value = grid[start[0]][start[1]]
+        original_end_value = grid[end[0]][end[1]]
+        grid[start[0]][start[1]] = 0
+        grid[end[0]][end[1]] = 0
+
     # Check if the cell is on the perimeter of the grid
-    if (x, y) == start or (x, y) == end:
-        return True
     if x == 0 or x == rows - 1 or y == 0 or y == cols - 1:
+        if label:
+            # Restore the original values
+            grid[start[0]][start[1]] = original_start_value
+            grid[end[0]][end[1]] = original_end_value
         return True
+
     # Check if the cell is adjacent to a non-traversable cell connected to the perimeter
     for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]:
         nx, ny = x + dx, y + dy
         if 0 <= nx < rows and 0 <= ny < cols and (grid[nx][ny] == 0):# or grid[nx][ny] == -1):
             if nx == 0 or nx == rows - 1 or ny == 0 or ny == cols - 1:
+                if label:
+                    # Restore the original values
+                    grid[start[0]][start[1]] = original_start_value
+                    grid[end[0]][end[1]] = original_end_value
                 return True
             # Check if the non-traversable cell is connected to the perimeter
             for ddx, ddy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]:
                 nnx, nny = nx + ddx, ny + ddy
                 if 0 <= nnx < rows and 0 <= nny < cols and (grid[nnx][nny] == 0):# or grid[nnx][nny] == -1):
                     if nnx == 0 or nnx == rows - 1 or nny == 0 or nny == cols - 1:
+                        if label:
+                            # Restore the original values
+                            grid[start[0]][start[1]] = original_start_value
+                            grid[end[0]][end[1]] = original_end_value
                         return True
+
+    if label:
+        # Restore the original values
+        grid[start[0]][start[1]] = original_start_value
+        grid[end[0]][end[1]] = original_end_value
+
     return False
 
 def parse_grid(grid_str):
@@ -116,6 +149,7 @@ def main():
     parser = argparse.ArgumentParser(description="Grid Perimeter Finder")
     parser.add_argument('-g', '--grid', type=str, required=True, help="Grid definition string")
     parser.add_argument('-c', '--color', action='store_true', help="Enable colored output")
+    parser.add_argument('-p', '--path', type=str, help="Start and end labels separated by a comma (e.g., A,B)")
     args = parser.parse_args()
 
     grid, pairs, labels = parse_grid(args.grid)
@@ -125,7 +159,7 @@ def main():
             if grid[i][j] == 1:  # Only consider traversable cells
                 for pair in pairs:
                     start, end = pair['start'], pair['end']
-                    if is_perimeter(grid, i, j, start, end):
+                    if is_perimeter(grid, i, j, pairs, args.path):
                         grid[i][j] = '@'
 
     print("Grid with Perimeter cells marked:")
