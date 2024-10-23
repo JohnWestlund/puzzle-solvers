@@ -10,13 +10,13 @@ def is_perimeter(grid, x, y, start, end):
     # Check if the cell is adjacent to a non-traversable cell connected to the perimeter
     for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]:
         nx, ny = x + dx, y + dy
-        if 0 <= nx < rows and 0 <= ny < cols and grid[nx][ny] == 0:
+        if 0 <= nx < rows and 0 <= ny < cols and (grid[nx][ny] == 0):# or grid[nx][ny] == -1):
             if nx == 0 or nx == rows - 1 or ny == 0 or ny == cols - 1:
                 return True
             # Check if the non-traversable cell is connected to the perimeter
             for ddx, ddy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]:
                 nnx, nny = nx + ddx, ny + ddy
-                if 0 <= nnx < rows and 0 <= nny < cols and grid[nnx][nny] == 0:
+                if 0 <= nnx < rows and 0 <= nny < cols and (grid[nnx][nny] == 0):# or grid[nnx][nny] == -1):
                     if nnx == 0 or nnx == rows - 1 or nny == 0 or nny == cols - 1:
                         return True
     return False
@@ -93,8 +93,8 @@ def colorize(cell, pairs, labels):
             return '#'
         elif cell == -1 or cell == '-1':
             return '*'
-        elif cell == 'P':
-            return f"\033[93mP{reset}"  # Yellow for perimeter cells
+        elif cell == '@':
+            return f"\033[93m@{reset}"  # Yellow for perimeter cells
     return f"{color_map.get(cell, '')}{cell}{reset}"
 
 def print_grid(grid, pairs, use_color, labels):
@@ -122,10 +122,11 @@ def main():
 
     for i in range(len(grid)):
         for j in range(len(grid[0])):
-            for pair in pairs:
-                start, end = pair['start'], pair['end']
-                if is_perimeter(grid, i, j, start, end):
-                    grid[i][j] = 'P'
+            if grid[i][j] == 1:  # Only consider traversable cells
+                for pair in pairs:
+                    start, end = pair['start'], pair['end']
+                    if is_perimeter(grid, i, j, start, end):
+                        grid[i][j] = '@'
 
     print("Grid with Perimeter cells marked:")
     print_grid(grid, pairs, args.color, labels)
