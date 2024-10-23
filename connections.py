@@ -15,13 +15,13 @@ def is_valid_move(grid, x, y, visited):
 
 def is_perimeter(grid, x, y, start, end):
     rows, cols = len(grid), len(grid[0])
-    
+
     # Check if the cell is on the perimeter of the grid
     if (x, y) == start or (x, y) == end:
         return True
     if x == 0 or x == rows - 1 or y == 0 or y == cols - 1:
         return True
-    
+
     # Check if the cell is adjacent to a non-traversable cell connected to the perimeter
     for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]:
         nx, ny = x + dx, y + dy
@@ -34,7 +34,7 @@ def is_perimeter(grid, x, y, start, end):
                 if 0 <= nnx < rows and 0 <= nny < cols and grid[nnx][nny] == 0:
                     if nnx == 0 or nnx == rows - 1 or nny == 0 or nny == cols - 1:
                         return True
-    
+
     return False
 
 def find_paths(grid, start, end, visited, max_paths, perimeter_mode=False):
@@ -234,13 +234,13 @@ def parse_grid(grid_str):
             pairs_dict[label].append(position)
         else:
             pairs_dict[label] = [position]
-    
+
     # Check that each label has exactly two coordinates
     for label, positions in pairs_dict.items():
         if len(positions) != 2:
             print(f"Error: Label '{label}' does not have exactly two coordinates. Found positions: {positions}")
             exit(1)
-    
+
     start_end_pairs = [{'start': positions[0], 'end': positions[1], 'label': label} for label, positions in pairs_dict.items()]
     return grid, start_end_pairs, labels
 
@@ -288,14 +288,14 @@ def main():
     parser.add_argument('-c', '--color', action='store_true', help="Enable colored output")
     parser.add_argument('-g', '--grid', type=str, required=True, help="Grid definition string")
     parser.add_argument('-s', '--solve', action='store_true', help="Solve the grid and find paths")
-    parser.add_argument('-m', '--max', type=int, default=-1, help="Maximum number of paths to find before stopping early")
+    parser.add_argument('-m', '--max', type=int, default=500000, help="Maximum number of paths to find before stopping early (default: 500000, -1 for infinite)")
     parser.add_argument('-p', '--perimeter', type=str, help="Solve for perimeter path for the specified pair label")
-    parser.add_argument('-P', '--path', type=str, nargs=2, metavar=('LABEL', 'DIRECTIONS'), help="Specify a hardcoded path for a pair")
+    parser.add_argument('-P', '--path', type=str, nargs=2, action='append', metavar=('LABEL', 'DIRECTIONS'), help="Specify a hardcoded path for a pair (can be used multiple times)")
     parser.add_argument('-v', '--verbose', action='count', default=0, help="Increase verbosity level")
     parser.add_argument('-f', '--fast', action='store_true', help="Enable fast mode to stop after finding the first solution")
     args = parser.parse_args()
 
-    global max_paths, print_progress, verbosity, hardcoded_paths, fast_mode
+    global max_paths, print_progress, verbosity, hardcoded_paths, fast_mode 
     max_paths = args.max
     verbosity = args.verbose
     fast_mode = args.fast
@@ -308,11 +308,11 @@ def main():
         print_grid(grid, pairs, args.color, labels)
 
     if args.path:
-        label, directions = args.path
-        pair = next(pair for pair in pairs if pair['label'] == label)
-        start, end = pair['start'], pair['end']
-        hardcoded_path = parse_hardcoded_path(directions, start)
-        hardcoded_paths[label] = hardcoded_path
+        for label, directions in args.path:
+            pair = next(pair for pair in pairs if pair['label'] == label)
+            start, end = pair['start'], pair['end']
+            hardcoded_path = parse_hardcoded_path(directions, start)
+            hardcoded_paths[label] = hardcoded_path
 
     if args.perimeter:
         pair = next(pair for pair in pairs if pair['label'] == args.perimeter)
@@ -355,7 +355,7 @@ def main():
         pairs_to_solve = [pair for pair in pairs if pair['label'] not in hardcoded_paths]
         pairs_already_solved = [pair for pair in pairs if pair['label'] in hardcoded_paths]
         # Adjust total_traversable to account for hardcoded paths
-        total_traversable -= sum(len(path) + 1 for path in hardcoded_paths_list)  # Add 1 for the dummy direction
+        total_traversable -= sum(len(path) + 1 for path in hardcoded_paths_list) # Add 1 for the dummy direction
         if verbosity >= 1:
             print(f"Debug: Adjusted total_traversable={total_traversable} after applying hardcoded paths")
         pair_paths_count = []
@@ -375,7 +375,7 @@ def main():
             else:
                 print(f"\r{current_pair_info} {len(paths)} possible paths")
                 pair_paths_count.append((len(paths), pair))
-            del paths  # Explicitly delete the paths object to free memory
+            del paths # Explicitly delete the paths object to free memory
             grid[start[0]][start[1]] = 0
             grid[end[0]][end[1]] = 0
         pair_paths_count.sort()
