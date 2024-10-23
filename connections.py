@@ -11,7 +11,7 @@ fast_mode = False  # Global variable to enable fast mode
 
 def is_valid_move(grid, x, y, visited):
     rows, cols = len(grid), len(grid[0])
-    return 0 <= x < rows and 0 <= y < cols and grid[x][y] == 1 and (x, y) not in visited
+    return 0 <= x < rows and 0 <= y < cols and grid[x][y] >= 1 and (x, y) not in visited
 
 def is_perimeter(grid, x, y, start, end):
     rows, cols = len(grid), len(grid[0])
@@ -101,8 +101,8 @@ def find_all_paths(grid, pairs, index, visited, total_traversable):
 
     for path in find_paths(grid, start, end, visited, -1):
         if path is None:
-            grid[start[0]][start[1]] = 0
-            grid[end[0]][end[1]] = 0
+            grid[start[0]][start[1]] = -1
+            grid[end[0]][end[1]] = -1
             if verbosity >= 2:
                 print(f"Debug: Early exit due to max cap reached for pair {start} -> {end}")
             return all_paths  # Early exit if max cap is reached
@@ -117,15 +117,14 @@ def find_all_paths(grid, pairs, index, visited, total_traversable):
 
         # Early exit if all traversable locations are used
         if len(new_visited) == total_traversable:
-            grid[start[0]][start[1]] = 0
-            grid[end[0]][end[1]] = 0
+            grid[start[0]][start[1]] = -1
+            grid[end[0]][end[1]] = -1
             if verbosity >= 1:
                 print(f"Debug: Early exit with all traversable locations used for pair {start} -> {end}")
-            return all_paths
+            return all_paths  # Early exit if all traversable locations are used
 
-    grid[start[0]][start[1]] = 0
-    grid[end[0]][end[1]] = 0
-
+    grid[start[0]][start[1]] = -1
+    grid[end[0]][end[1]] = -1
     if verbosity >= 2:
         print(f"Debug: Returning all_paths with length={len(all_paths)} for pair {start} -> {end}")
 
@@ -220,7 +219,7 @@ def parse_grid(grid_str):
             except ValueError:
                 if cell not in labels:
                     labels.append(cell)
-                grid_row.append(0)
+                grid_row.append(-1)
                 pairs.append({'label': cell, 'start': (i, len(grid_row) - 1)})
         grid.append(grid_row)
     max_length = max(len(row) for row in grid)
@@ -331,13 +330,14 @@ def main():
         else:
             print(f"\r{current_pair_info} {len(paths)} possible paths")
         if verbosity >= 1:
+            #print_paths_on_grid(grid, paths, pairs, args.color, labels, debug_level=verbosity)
             print_paths_on_grid(grid, paths, [pair], args.color, [pair['label']], debug_level=verbosity)
         # Print the path definition in the format that the --path option will accept
         if paths:
             path_directions = ','.join(direction for _, _, direction in paths[0] if direction != 'E')
             print(f"Path definition for --path option: -P {pair['label']} \"{path_directions}\"")
-        grid[start[0]][start[1]] = 0
-        grid[end[0]][end[1]] = 0
+        grid[start[0]][start[1]] = -1
+        grid[end[0]][end[1]] = -1
         return
 
     if args.solve:
@@ -376,8 +376,8 @@ def main():
                 print(f"\r{current_pair_info} {len(paths)} possible paths")
                 pair_paths_count.append((len(paths), pair))
             del paths # Explicitly delete the paths object to free memory
-            grid[start[0]][start[1]] = 0
-            grid[end[0]][end[1]] = 0
+            grid[start[0]][start[1]] = -1
+            grid[end[0]][end[1]] = -1
         pair_paths_count.sort()
         sorted_pairs = [pair for _, pair in pair_paths_count]
         all_paths = find_all_paths(grid, sorted_pairs, 0, set(), total_traversable)
