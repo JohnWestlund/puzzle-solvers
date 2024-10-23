@@ -10,14 +10,13 @@ def is_perimeter(grid, x, y, pairs, label=None):
         except StopIteration:
             print(f"Label '{label}' not found in pairs.")
             return False
-
         start = start_end_pair['start']
         end = start_end_pair['end']
         original_start_value = grid[start[0]][start[1]]
         original_end_value = grid[end[0]][end[1]]
         grid[start[0]][start[1]] = 0
         grid[end[0]][end[1]] = 0
-
+    
     # Check if the cell is on the perimeter of the grid
     if x == 0 or x == rows - 1 or y == 0 or y == cols - 1:
         if label:
@@ -25,33 +24,52 @@ def is_perimeter(grid, x, y, pairs, label=None):
             grid[start[0]][start[1]] = original_start_value
             grid[end[0]][end[1]] = original_end_value
         return True
-
+    
+    # Directions for 8 adjacent cells
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
+    
     # Check if the cell is adjacent to a non-traversable cell connected to the perimeter
-    for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]:
+    for dx, dy in directions:
         nx, ny = x + dx, y + dy
-        if 0 <= nx < rows and 0 <= ny < cols and (grid[nx][ny] == 0):# or grid[nx][ny] == -1):
-            if nx == 0 or nx == rows - 1 or ny == 0 or ny == cols - 1:
+        if 0 <= nx < rows and 0 <= ny < cols and grid[nx][ny] == 0:
+            # Perform a BFS/DFS to check if this non-traversable cell is connected to the perimeter
+            if is_connected_to_perimeter(grid, nx, ny):
                 if label:
                     # Restore the original values
                     grid[start[0]][start[1]] = original_start_value
                     grid[end[0]][end[1]] = original_end_value
                 return True
-            # Check if the non-traversable cell is connected to the perimeter
-            for ddx, ddy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]:
-                nnx, nny = nx + ddx, ny + ddy
-                if 0 <= nnx < rows and 0 <= nny < cols and (grid[nnx][nny] == 0):# or grid[nnx][nny] == -1):
-                    if nnx == 0 or nnx == rows - 1 or nny == 0 or nny == cols - 1:
-                        if label:
-                            # Restore the original values
-                            grid[start[0]][start[1]] = original_start_value
-                            grid[end[0]][end[1]] = original_end_value
-                        return True
-
+    
     if label:
         # Restore the original values
         grid[start[0]][start[1]] = original_start_value
         grid[end[0]][end[1]] = original_end_value
+    
+    return False
 
+def is_connected_to_perimeter(grid, x, y):
+    rows, cols = len(grid), len(grid[0])
+    visited = set()
+    stack = [(x, y)]
+    
+    while stack:
+        cx, cy = stack.pop()
+        if (cx, cy) in visited:
+            continue
+        visited.add((cx, cy))
+        
+        # Check if this cell is on the perimeter
+        if cx == 0 or cx == rows - 1 or cy == 0 or cy == cols - 1:
+            return True
+        
+        # Directions for 4-connected cells (up, down, left, right)
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        
+        for dx, dy in directions:
+            nx, ny = cx + dx, cy + dy
+            if 0 <= nx < rows and 0 <= ny < cols and grid[nx][ny] == 0 and (nx, ny) not in visited:
+                stack.append((nx, ny))
+    
     return False
 
 def parse_grid(grid_str):
