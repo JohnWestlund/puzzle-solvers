@@ -223,11 +223,10 @@ except ValueError as e:
 
 board_bitmap = convert_to_1d_bitmap(board_array)
 
-if args.v >= 1:
-    print("Board:")
-    print_bit_array(board_array)
+print("Board:")
+print_bit_array(board_array)
 
-if args.v >= 2:
+if args.v >= 1:
     print("1D Board Bitmap:")
     print_1d_bitmap(board_bitmap)
 
