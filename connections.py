@@ -1,5 +1,9 @@
 import argparse
 
+# TODO:
+# 1. fix non-colorized output
+# 2. automatically search for perimeter paths before doing a search for all paths and sorting
+
 # Global counter for the number of paths found
 path_counter = 0
 current_pair_info = ""
@@ -166,7 +170,7 @@ def print_paths_on_grid(grid, paths, pairs, use_color, labels, debug_level=0):
         if use_color:
             print(' '.join(colorize(cell, pairs, labels) for cell in row))
         else:
-            print(' '.join(str(cell) for cell in row))
+            print(' '.join('*' if cell == -1 else str(cell) for cell in row))
     print()
 
 def colorize(cell, pairs, labels):
@@ -198,6 +202,8 @@ def colorize(cell, pairs, labels):
             return '_'
         elif cell == 0 or cell == '0':
             return '#'
+        elif cell == -1 or cell == '-1':
+            return '*'
         return f"{color_map.get(cell, '')}{cell}{reset}"
 
 def parse_grid(grid_str):
@@ -330,7 +336,7 @@ def main():
         else:
             print(f"\r{current_pair_info} {len(paths)} possible paths")
         if verbosity >= 1:
-            #print_paths_on_grid(grid, paths, pairs, args.color, labels, debug_level=verbosity)
+            # Pass only the relevant pair and label here
             print_paths_on_grid(grid, paths, [pair], args.color, [pair['label']], debug_level=verbosity)
         # Print the path definition in the format that the --path option will accept
         if paths:
