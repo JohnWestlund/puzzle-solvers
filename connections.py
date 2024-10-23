@@ -14,11 +14,27 @@ def is_valid_move(grid, x, y, visited):
     return 0 <= x < rows and 0 <= y < cols and grid[x][y] == 1 and (x, y) not in visited
 
 def is_perimeter(grid, x, y, start, end):
-    rows, cols = len(grid[0]), len(grid[0])
+    rows, cols = len(grid), len(grid[0])
+    
+    # Check if the cell is on the perimeter of the grid
     if (x, y) == start or (x, y) == end:
         return True
     if x == 0 or x == rows - 1 or y == 0 or y == cols - 1:
         return True
+    
+    # Check if the cell is adjacent to a non-traversable cell connected to the perimeter
+    for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]:
+        nx, ny = x + dx, y + dy
+        if 0 <= nx < rows and 0 <= ny < cols and grid[nx][ny] == 0:
+            if nx == 0 or nx == rows - 1 or ny == 0 or ny == cols - 1:
+                return True
+            # Check if the non-traversable cell is connected to the perimeter
+            for ddx, ddy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]:
+                nnx, nny = nx + ddx, ny + ddy
+                if 0 <= nnx < rows and 0 <= nny < cols and grid[nnx][nny] == 0:
+                    if nnx == 0 or nnx == rows - 1 or nny == 0 or nny == cols - 1:
+                        return True
+    
     return False
 
 def find_paths(grid, start, end, visited, max_paths, perimeter_mode=False):
@@ -28,7 +44,7 @@ def find_paths(grid, start, end, visited, max_paths, perimeter_mode=False):
 
     if start == end:
         path_counter += 1
-        if print_progress and path_counter % 1000 == 0:
+        if print_progress and path_counter % 512 == 0:
             print(f"\r{current_pair_info} Paths found: {path_counter}", end='', flush=True)
         if max_paths != -1 and path_counter >= max_paths:
             return None  # Indicate that the max cap has been reached
@@ -218,6 +234,13 @@ def parse_grid(grid_str):
             pairs_dict[label].append(position)
         else:
             pairs_dict[label] = [position]
+    
+    # Check that each label has exactly two coordinates
+    for label, positions in pairs_dict.items():
+        if len(positions) != 2:
+            print(f"Error: Label '{label}' does not have exactly two coordinates. Found positions: {positions}")
+            exit(1)
+    
     start_end_pairs = [{'start': positions[0], 'end': positions[1], 'label': label} for label, positions in pairs_dict.items()]
     return grid, start_end_pairs, labels
 
