@@ -5,8 +5,6 @@ import itertools
 def find_paths(grid_obj, start, end, visited, perimeter_mode=False, label=None):
     def dfs(current, path, visited):
         nonlocal path_counter
-        if path_counter >= max_paths or (fast_mode and solution_found):
-            return
 
         if current == end:
             # Append the 'E' dummy direction to indicate the end
@@ -40,12 +38,10 @@ def find_paths(grid_obj, start, end, visited, perimeter_mode=False, label=None):
     path_counter = 0
     dfs(start, [], visited)
 
-    # Final progress print to indicate if max_paths was exceeded or fast_mode was used
+    # Final progress print to indicate if max_paths was exceeded
     if print_progress:
         if path_counter >= max_paths:
             status = "max_paths exceeded"
-        elif fast_mode and solution_found:
-            status = "fast_mode exit"
         else:
             status = "complete"
         print(f"\rPair {label} ({start} -> {end}) paths found: {path_counter} ({status})", flush=True)
@@ -100,20 +96,15 @@ def find_all_combinations(grid_obj, labels):
 parser = argparse.ArgumentParser(description="Grid Path Finder")
 parser.add_argument('-c', '--color', action='store_true', help="Enable colored output")
 parser.add_argument('-g', '--grid', type=str, required=True, help="Grid definition string")
-parser.add_argument('-s', '--solve', action='store_true', help="Solve the grid and find paths")
 parser.add_argument('-m', '--max', type=int, default=500000, help="Maximum number of paths to find before stopping early (default: 500000, -1 for infinite)")
-parser.add_argument('-p', '--perimeter', type=str, help="Solve for perimeter path for the specified pair label")
-parser.add_argument('-P', '--path', type=str, nargs=2, action='append', metavar=('LABEL', 'DIRECTIONS'), help="Specify a hardcoded path for a pair (can be used multiple times)")
 parser.add_argument('-v', '--verbose', action='count', default=0, help="Increase verbosity level")
-parser.add_argument('-f', '--fast', action='store_true', help="Enable fast mode to stop after finding the first solution")
 args = parser.parse_args()
 
 # Set globals
-global max_paths, print_progress, verbosity, hardcoded_paths, fast_mode, path_counter
+global max_paths, print_progress, verbosity, hardcoded_paths, path_counter
 print_progress = False
 max_paths = args.max
 verbosity = args.verbose
-fast_mode = args.fast
 
 grid = Grid(args.grid)
 

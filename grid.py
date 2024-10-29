@@ -12,24 +12,6 @@ class Path:
         if DEBUG:
             self.print()
 
-#    @staticmethod
-#    def parse_hardcoded_path(path_str, start):
-#        directions = path_str.split(',')
-#        path = []
-#        x, y = start
-#        for direction in directions:
-#            if direction == '^':
-#                x -= 1
-#            elif direction == 'v':
-#                x += 1
-#            elif direction == '<':
-#                y -= 1
-#            elif direction == '>':
-#                y += 1
-#            path.append((x, y, direction))
-#        end = (x, y)
-#        return Path(label=None, start=start, end=end, directions=directions)
-
     def get_path_coordinates(self, include_direction=True):
         x, y = self.start
         path_coordinates = []
@@ -242,9 +224,9 @@ class Grid:
             else:
                 raise ValueError(f"Error: {label} not in color_map")
         else:
-            if cell == '1':
+            if cell == '1' or cell == 1:
                 return '_'
-            elif cell == '0':
+            elif cell == '0' or cell == 0:
                 return '#'
             elif cell == '-1' or cell == -1:
                 return '*'
