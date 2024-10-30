@@ -3,8 +3,16 @@ import argparse
 import itertools
 
 def find_paths(grid_obj, start, end, visited, perimeter_mode=False, label=None):
+    perimeter_message=" "
+    if perimeter_mode:
+        perimeter_message = " perimeter "
+
     def dfs(current, path, visited):
         nonlocal path_counter
+
+        # Early return if path_counter exceeds max_paths
+        if path_counter >= max_paths:
+            return
 
         if current == end:
             # Append the 'E' dummy direction to indicate the end
@@ -16,7 +24,7 @@ def find_paths(grid_obj, start, end, visited, perimeter_mode=False, label=None):
 
             # Print progress if enabled
             if print_progress and path_counter % 512 == 0:
-                print(f"\rPair {label} ({start} -> {end}) paths found: {path_counter}", end='', flush=True)
+                print(f"\rPair {label} ({start} -> {end}){perimeter_message}paths found: {path_counter}", end='', flush=True)
             return
 
         x, y = current
@@ -44,7 +52,7 @@ def find_paths(grid_obj, start, end, visited, perimeter_mode=False, label=None):
             status = "max_paths exceeded"
         else:
             status = "complete"
-        print(f"\rPair {label} ({start} -> {end}) paths found: {path_counter} ({status})", flush=True)
+        print(f"\rPair {label} ({start} -> {end}){perimeter_message}paths found: {path_counter} ({status})", flush=True)
 
     return paths
 
@@ -96,12 +104,12 @@ def find_all_combinations(grid_obj, labels):
 parser = argparse.ArgumentParser(description="Grid Path Finder")
 parser.add_argument('-c', '--color', action='store_true', help="Enable colored output")
 parser.add_argument('-g', '--grid', type=str, required=True, help="Grid definition string")
-parser.add_argument('-m', '--max', type=int, default=500000, help="Maximum number of paths to find before stopping early (default: 500000, -1 for infinite)")
+parser.add_argument('-m', '--max', type=int, default=50000, help="Maximum number of paths to find before stopping early (default: 50000, -1 for infinite)")
 parser.add_argument('-v', '--verbose', action='count', default=0, help="Increase verbosity level")
 args = parser.parse_args()
 
 # Set globals
-global max_paths, print_progress, verbosity, hardcoded_paths, path_counter
+global max_paths, print_progress, verbosity, path_counter
 print_progress = False
 max_paths = args.max
 verbosity = args.verbose
@@ -117,8 +125,6 @@ if verbosity >= 2 and args.perimeter:
     grid.print_perimeter(args.perimeter)
     print(f"grid.total_traversable: {grid.total_traversable}")
 
-# SKIPPING PATH LOGIC FOR NOW
-
 # Store paths from each run
 all_perimeter_paths = []
 perimeter_path_labels = []
@@ -132,6 +138,7 @@ for label, pair in grid.pairs_dict.items():
     path_counter = 0
     print_progress = True
     grid.activate_pair(pair, 1)
+    print("Searching for pairs that can be connected via grid perimeter:")
     paths = find_paths(grid, pair['start'], pair['end'], set(), perimeter_mode=True, label=label)
     grid.activate_pair(None)
     print_progress = False
@@ -163,11 +170,12 @@ labels_to_solve = internal_path_labels
 
 # NOTE: Assumes at least 1 perimeter path was found
 # Process each combination of perimeter paths
-for path_combination in all_perimeter_combinations:
-    print("Processing combination:")
+for i, path_combination in enumerate(all_perimeter_combinations):
+    print(f"\nProcessing perimeter path combination {i+1}/{len(all_perimeter_combinations)}:")
     for path in path_combination:
+        # Pass list of internal_path_labels to change total number of traversible cells
         grid.activate_path(path, 0, len(internal_path_labels)) # Mark path as non-traversible
-        grid.print(use_color=True)
+    grid.print_paths(path_combination, use_color=args.color, debug_level=verbosity)
     label_path_count = []
     for label in labels_to_solve:
         pair = grid.pairs_dict[label]
@@ -184,10 +192,8 @@ for path_combination in all_perimeter_combinations:
         print_progress = False
 
         if paths is None:
-            print(f"\r{current_pair_info} {max_paths} possible paths (max cap reached)")
             label_path_count.append((max_paths, label))
         else:
-            print(f"\r{current_pair_info} {len(paths)} possible paths")
             label_path_count.append((len(paths), label))
 
         # Deactivate the pair to restore the original grid state
