@@ -43,6 +43,8 @@ class Grid:
         self.original_values = []  # Stack to store original values of pairs
 
     def parse_grid(self, grid_str):
+        grid_str = grid_str.replace('\\', '')
+        grid_str = grid_str.replace(';', '.')
         rows = grid_str.split('.')
         grid = []
         pairs = []

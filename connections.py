@@ -1,6 +1,7 @@
 from grid import Grid, Path
 import argparse
 import itertools
+import sys
 
 def find_paths(grid_obj, start, end, visited, perimeter_mode=False, label=None):
     perimeter_message=" "
@@ -100,8 +101,18 @@ def find_all_combinations(grid_obj, labels):
     search(0, [], set())
     return valid_combinations
 
+class CustomArgumentParser(argparse.ArgumentParser):
+    def error(self, message):
+        # Check if any argument starts with a '-'
+        for arg in sys.argv[1:]:
+            if arg.startswith('-') and not arg.startswith('--'):
+                message += "\nIf an argument starts with a '-', please escape it with a '\\'."
+                break
+        self.print_usage(sys.stderr)
+        self.exit(2, f"Error parsing arguments: {message}\n")
+
 # Read in command line options
-parser = argparse.ArgumentParser(description="Grid Path Finder")
+parser = CustomArgumentParser(description='Grid Path Finder')
 parser.add_argument('-c', '--color', action='store_true', help="Enable colored output")
 parser.add_argument('-g', '--grid', type=str, required=True, help="Grid definition string")
 parser.add_argument('-m', '--max', type=int, default=50000, help="Maximum number of paths to find before stopping early (default: 50000, -1 for infinite)")
