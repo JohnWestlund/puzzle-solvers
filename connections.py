@@ -141,6 +141,7 @@ all_perimeter_paths = []
 perimeter_path_labels = []
 internal_path_labels = []
 
+print("Searching for pairs that can be connected via grid perimeter:")
 for label, pair in grid.pairs_dict.items():
     if verbosity >= 3:
         print(f"Label {label} Grid Perimeter Cell View:")
@@ -149,7 +150,6 @@ for label, pair in grid.pairs_dict.items():
     path_counter = 0
     print_progress = True
     grid.activate_pair(pair, 1)
-    print("Searching for pairs that can be connected via grid perimeter:")
     paths = find_paths(grid, pair['start'], pair['end'], set(), perimeter_mode=True, label=label)
     grid.activate_pair(None)
     print_progress = False
