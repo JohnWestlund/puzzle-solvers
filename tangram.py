@@ -127,9 +127,9 @@ def print_bit_array(bit_array, piece_number=None, use_color=False, verbosity=0):
         for row in bit_array:
             if use_color:
                 color = COLORS[0]
-                row_str = ' ' + ' '.join((color + "#" + reset if x == 1 else "_" for x in row[:max_length]))
+                row_str = ' ' + ' '.join((color + "#" + reset if x == 1 else "_" if x == 0 else str(x) for x in row[:max_length]))
             else:
-                row_str = ' ' + ' '.join(("#" if x == 1 else "_" for x in row[:max_length]))
+                row_str = ' ' + ' '.join(("#" if x == 1 else "_" if x == 0 else str(x) for x in row[:max_length]))
             print("|" + row_str + " " + reset + " " * (max_length * 2 - 2 - len(row_str)) + "|")
         print("+" + "-" * (max_length * 2 + 1) + "+")
 
