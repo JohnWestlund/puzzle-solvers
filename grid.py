@@ -135,7 +135,7 @@ class Grid:
             self.grid[start[0]][start[1]] = value
             self.grid[end[0]][end[1]] = value
 
-    def is_perimeter(self, x, y, pair, debug=False):
+    def is_perimeter(self, x, y, visited, pair, debug=False):
         # Activate the pair at the beginning
         self.activate_pair(pair, 0)
         rows, cols = len(self.grid), len(self.grid[0])
@@ -153,15 +153,16 @@ class Grid:
             nx, ny = x + dx, y + dy
             if 0 <= nx < rows and 0 <= ny < cols and self.grid[nx][ny] == 0:
                 # Perform a BFS/DFS to check if this non-traversable cell is connected to the perimeter
-                if self.is_connected_to_perimeter(nx, ny):
+                if self.is_connected_to_perimeter(nx, ny, visited.copy()):
                     self.activate_pair(None)  # Deactivate the pair before returning
-                    return self.is_connected_to_perimeter(nx, ny, debug) if debug else True
+                    return self.is_connected_to_perimeter(nx, ny, visited.copy(), debug) if debug else True
 
         self.activate_pair(None)  # Deactivate the pair before returning
         return 0 if debug else False
 
-    def is_connected_to_perimeter(self, x, y, debug=False):
+    def is_connected_to_perimeter(self, x, y, path_visited, debug=False):
         rows, cols = len(self.grid), len(self.grid[0])
+        path_visited.pop()
         visited = set()
         stack = [(x, y)]
         
@@ -179,7 +180,7 @@ class Grid:
             directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
             for dx, dy in directions:
                 nx, ny = cx + dx, cy + dy
-                if 0 <= nx < rows and 0 <= ny < cols and self.grid[nx][ny] == 0 and (nx, ny) not in visited:
+                if 0 <= nx < rows and 0 <= ny < cols and (self.grid[nx][ny] == 0 or (nx, ny) in path_visited) and (nx, ny) not in visited:
                     stack.append((nx, ny))
         
         return 4 if debug else False

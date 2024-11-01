@@ -12,7 +12,7 @@ def find_paths(grid_obj, start, end, visited, perimeter_mode=False, label=None):
         nonlocal path_counter
 
         # Early return if path_counter exceeds max_paths
-        if path_counter >= max_paths:
+        if path_counter >= max_paths and -1 != max_paths:
             return
 
         if current == end:
@@ -36,7 +36,7 @@ def find_paths(grid_obj, start, end, visited, perimeter_mode=False, label=None):
 
         for dx, dy, direction in moves:
             nx, ny = x + dx, y + dy
-            if grid_obj.is_valid_move(nx, ny, visited) and (not perimeter_mode or grid_obj.is_perimeter(nx, ny, grid.pairs_dict.get(label, None))):
+            if grid_obj.is_valid_move(nx, ny, visited) and (not perimeter_mode or grid_obj.is_perimeter(nx, ny, visited, grid.pairs_dict.get(label, None))):
                 path.append(direction)
                 dfs((nx, ny), path, visited)
                 path.pop()
@@ -49,7 +49,7 @@ def find_paths(grid_obj, start, end, visited, perimeter_mode=False, label=None):
 
     # Final progress print to indicate if max_paths was exceeded
     if print_progress:
-        if path_counter >= max_paths:
+        if path_counter >= max_paths and -1 != max_paths:
             status = "max_paths exceeded"
         else:
             status = "complete"
@@ -147,15 +147,39 @@ for label, pair in grid.pairs_dict.items():
         print(f"Label {label} Grid Perimeter Cell View:")
         grid.print_perimeter(label)
 
-    path_counter = 0
     print_progress = True
     grid.activate_pair(pair, 1)
-    paths = find_paths(grid, pair['start'], pair['end'], set(), perimeter_mode=True, label=label)
+
+    # Find paths from start to end
+    path_counter = 0
+    paths_start_to_end = find_paths(grid, pair['start'], pair['end'], set(), perimeter_mode=True, label=label)
+
+    # Find paths from end to start
+    path_counter = 0
+    paths_end_to_start = find_paths(grid, pair['end'], pair['start'], set(), perimeter_mode=True, label=label)
+
     grid.activate_pair(None)
     print_progress = False
-    if paths and len(paths) > 0:
+
+    # Extract coordinate sets for paths_start_to_end
+    coordinates_start_to_end = {frozenset(path.get_path_coordinates(include_direction=False)) for path in paths_start_to_end}
+
+    # Initialize unique paths with all paths from start to end
+    unique_paths = list(paths_start_to_end)
+
+    # Add paths from end to start only if they are not in paths_start_to_end
+    for path in paths_end_to_start:
+        path_coords = frozenset(path.get_path_coordinates(include_direction=False))
+        if path_coords not in coordinates_start_to_end:
+            unique_paths.append(path)
+
+    if unique_paths:
+        print(f"Label {label} perimeter paths found:")
+        print(f"  Forward: {len(paths_start_to_end)}, Backward: {len(paths_end_to_start)}, Unique: {len(unique_paths)}\n")
         perimeter_path_labels.append(label)
-        all_perimeter_paths.append(paths)
+        # Sort unique paths by the length of directions
+        unique_paths.sort(key=lambda path: len(path.directions))
+        all_perimeter_paths.append(unique_paths)
     else:
         internal_path_labels.append(label)
 
@@ -164,6 +188,26 @@ all_perimeter_paths.sort(key=len)
 
 # Generate all combinations of perimeter paths
 all_perimeter_combinations = list(itertools.product(*all_perimeter_paths))
+
+# Filter combinations to remove those with overlapping coordinates
+valid_combinations = []
+for combination in all_perimeter_combinations:
+    all_coordinates = set()
+    overlap_found = False
+    for path in combination:
+        # Check for overlap
+        if all_coordinates.intersection(path.get_path_coordinates(include_direction=False)):
+            overlap_found = True
+            break
+        # Add path coordinates to the set
+        all_coordinates.update(path.get_path_coordinates(include_direction=False))
+
+    if not overlap_found:
+        valid_combinations.append(combination)
+
+# Check if any combinations were removed
+if len(valid_combinations) < len(all_perimeter_combinations):
+    print(f"Down-selected to {len(valid_combinations)} non-overlapping perimeter path combinations from {len(all_perimeter_combinations)} total combinations.")
 
 # Output the lists of labels
 if verbosity >= 2:
@@ -181,8 +225,8 @@ labels_to_solve = internal_path_labels
 
 # NOTE: Assumes at least 1 perimeter path was found
 # Process each combination of perimeter paths
-for i, path_combination in enumerate(all_perimeter_combinations):
-    print(f"\nProcessing perimeter path combination {i+1}/{len(all_perimeter_combinations)}:")
+for i, path_combination in enumerate(valid_combinations):
+    print(f"\nProcessing perimeter path combination {i+1}/{len(valid_combinations)}:")
     for path in path_combination:
         # Pass list of internal_path_labels to change total number of traversible cells
         grid.activate_path(path, 0, len(internal_path_labels)) # Mark path as non-traversible
